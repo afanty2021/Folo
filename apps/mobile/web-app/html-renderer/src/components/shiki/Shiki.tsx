@@ -1,4 +1,5 @@
 import clsx from "clsx"
+import DOMPurify from "dompurify"
 import { useIsomorphicLayoutEffect } from "foxact/use-isomorphic-layout-effect"
 import { useAtomValue } from "jotai"
 import type { FC } from "react"
@@ -167,7 +168,15 @@ const ShikiCode: FC<
         className,
       )}
     >
-      <div dangerouslySetInnerHTML={{ __html: rendered }} data-language={language} />
+      <div
+        dangerouslySetInnerHTML={{
+          __html: DOMPurify.sanitize(rendered, {
+            ALLOWED_TAGS: ['pre', 'code', 'div', 'span', 'br', 'hr'],
+            ALLOWED_ATTR: ['class', 'style', 'data-language'],
+          })
+        }}
+        data-language={language}
+      />
 
       {language !== "plaintext" && (
         <span className="center absolute bottom-2 right-2 flex gap-1 text-xs uppercase opacity-80 dark:text-white">

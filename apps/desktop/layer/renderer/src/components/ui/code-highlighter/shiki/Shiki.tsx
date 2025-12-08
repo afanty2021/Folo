@@ -1,5 +1,6 @@
 import { ELECTRON_BUILD } from "@follow/shared/constants"
 import { cn } from "@follow/utils/utils"
+import DOMPurify from "dompurify"
 import { useIsomorphicLayoutEffect } from "foxact/use-isomorphic-layout-effect"
 import type { FC } from "react"
 import { memo, useInsertionEffect, useMemo, useRef, useState } from "react"
@@ -235,7 +236,12 @@ const ShikiCode: FC<
       {/* Code content */}
       <div className="relative">
         <div
-          dangerouslySetInnerHTML={{ __html: rendered }}
+          dangerouslySetInnerHTML={{
+            __html: DOMPurify.sanitize(rendered, {
+              ALLOWED_TAGS: ['pre', 'code', 'div', 'span', 'br', 'hr'],
+              ALLOWED_ATTR: ['class', 'style', 'data-language'],
+            })
+          }}
           data-language={language}
           className="relative"
         />

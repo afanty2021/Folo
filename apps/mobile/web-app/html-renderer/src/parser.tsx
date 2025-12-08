@@ -169,13 +169,24 @@ export const parseHtml = (
   })
 }
 function extractCodeFromHtml(htmlString: string) {
-  const tempDiv = document.createElement("div")
-  tempDiv.innerHTML = htmlString
+  // 使用 DOMPurify 清理 HTML 内容，防止 XSS 攻击
+  import('dompurify').then(({ default: DOMPurify }) => {
+    const sanitizedHtml = DOMPurify.sanitize(htmlString, {
+      ALLOWED_TAGS: ['pre', 'code', 'div', 'span'],
+      ALLOWED_ATTR: ['class'],
+    })
 
-  const hasPre = tempDiv.querySelector("pre")
-  if (!hasPre) {
-    tempDiv.innerHTML = `<pre><code>${htmlString}</code></pre>`
-  }
+    const tempDiv = document.createElement("div")
+    tempDiv.innerHTML = sanitizedHtml
+
+    const hasPre = tempDiv.querySelector("pre")
+    if (!hasPre) {
+      const sanitizedCodeHtml = DOMPurify.sanitize(`<pre><code>${sanitizedHtml}</code></pre>`, {
+        ALLOWED_TAGS: ['pre', 'code'],
+        ALLOWED_ATTR: [],
+      })
+      tempDiv.innerHTML = sanitizedCodeHtml
+    }
 
   // 1. line break via <div />
   const divElements = tempDiv.querySelectorAll("div")

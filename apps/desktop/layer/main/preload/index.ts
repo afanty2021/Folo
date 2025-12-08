@@ -26,33 +26,48 @@ const detectingWindows11 = () => {
 
 export const isWindows11 = detectingWindows11()
 
-// Custom APIs for renderer
+// Custom APIs for renderer - 安全的 API 暴露
 const api = {
   canWindowBlur: process.platform === "darwin" || (process.platform === "win32" && isWindows11),
+  // 只暴露必要的平台信息，不暴露敏感的系统信息
+  platform: process.platform,
 }
 
-// Use `contextBridge` APIs to expose Electron APIs to
-// renderer only if context isolation is enabled, otherwise
-// just add to the DOM global.
+// 安全的剪贴板 API 包装
+const safeClipboardAPI = {
+  readText: () => clipboard.readText(),
+  writeText: (text: string) => clipboard.writeText(text),
+  // 不暴露 readBuffer/writeBuffer 等危险方法
+}
+
+// 使用 contextBridge 安全地暴露 APIs 到渲染进程
 if (process.contextIsolated) {
   try {
-    contextBridge.exposeInMainWorld("electron", electronAPI)
+    // 只暴露安全的 electron API
+    contextBridge.exposeInMainWorld("electron", {
+      ...electronAPI,
+      // 覆盖或移除危险的 API
+      ipcRenderer: {
+        invoke: electronAPI.ipcRenderer?.invoke,
+        on: electronAPI.ipcRenderer?.on,
+        off: electronAPI.ipcRenderer?.off,
+        // 不暴露 sendSync 等同步方法
+      },
+    })
+
     contextBridge.exposeInMainWorld("api", api)
-    contextBridge.exposeInMainWorld("platform", process.platform)
+    contextBridge.exposeInMainWorld("clipboard", safeClipboardAPI)
   } catch (error) {
-    console.error(error)
+    console.error("Failed to expose APIs to renderer:", error)
   }
 } else {
+  // 如果上下文隔离被禁用（不推荐），记录警告
+  console.warn("⚠️ 警告: 上下文隔离被禁用，这存在安全风险！")
+
   // @ts-ignore (define in dts)
   window.electron = electronAPI
   // @ts-ignore (define in dts)
   window.api = api
   // @ts-ignore (define in dts)
-  window.platform = process.platform
-
-  Object.defineProperty(window.navigator, "clipboard", {
-    get: () => {
-      return clipboard
-    },
-  })
+  window.clipboard = safeClipboardAPI
 }

@@ -16,7 +16,9 @@ import { initializeSentry } from "./sentry"
 
 /* eslint-disable no-console */
 export const initializeApp = async () => {
-  console.log(`Initialize...`)
+  if (__DEV__) {
+    console.log(`Initialize...`)
+  }
 
   const now = Date.now()
 
@@ -61,13 +63,17 @@ export const initializeApp = async () => {
   })
 
   initBackgroundTask()
-  console.log(`Initialize done,`, `${loadingTime}ms`)
+  if (__DEV__) {
+    console.log(`Initialize done,`, `${loadingTime}ms`)
+  }
 }
 
 const apm = async (label: string, fn: () => Promise<any> | any) => {
   const start = Date.now()
   const result = await fn()
   const end = Date.now()
-  console.log(`${label} took ${end - start}ms`)
+  if (__DEV__) {
+    console.log(`${label} took ${end - start}ms`)
+  }
   return result
 }

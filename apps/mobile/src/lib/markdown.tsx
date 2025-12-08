@@ -1,11 +1,12 @@
 import { parseMarkdown } from "@follow/components/utils/parse-markdown.tsx"
 import * as React from "react"
 import { Linking, TextInput, View } from "react-native"
+import type { ReactNode } from "react"
 
 // Helper function to ensure text is wrapped in Text component
 import { Text } from "@/src/components/ui/typography/Text"
 
-const wrapText = (children: any): any => {
+const wrapText = (children: ReactNode): ReactNode => {
   if (typeof children === "string") {
     if (children.trim() === "") {
       return null
@@ -45,7 +46,7 @@ const wrapText = (children: any): any => {
 }
 
 // Helper function to safely render children in Text components
-const renderTextChildren = (children: any): any => {
+const renderTextChildren = (children: ReactNode): ReactNode => {
   if (typeof children === "string") {
     return children
   }
@@ -68,7 +69,7 @@ const renderTextChildren = (children: any): any => {
 }
 export const renderMarkdown = (markdown: string) => {
   // Fallback component for unknown HTML elements
-  const FallbackComponent = ({ children, node, ..._props }: any) => {
+  const FallbackComponent = ({ children, node, ..._props }: { children: ReactNode; node?: any; [key: string]: any }) => {
     // For text-like elements, use Text
     if (
       typeof children === "string" ||
@@ -80,16 +81,27 @@ export const renderMarkdown = (markdown: string) => {
     return <View>{wrapText(children)}</View>
   }
 
-  // Create components object with fallback for unknown elements
+  // Define proper types for markdown components
+type MarkdownComponentProps = {
+  children: ReactNode
+  node?: any
+  className?: string
+  multiline?: boolean
+  readOnly?: boolean
+  placeholder?: string
+  [key: string]: any
+}
+
+// Create components object with fallback for unknown elements
   const components = new Proxy(
     {
       // React Native compatible components - GitHub markdown style
-      p: ({ children, node, ...props }: any) => (
+      p: ({ children, node, ...props }: MarkdownComponentProps) => (
         <TextInput className="mb-4 text-base text-label" multiline readOnly {...props}>
           {renderTextChildren(children)}
         </TextInput>
       ),
-      h1: ({ children, node, ...props }: any) => (
+      h1: ({ children, node, ...props }: MarkdownComponentProps) => (
         <TextInput
           readOnly
           multiline
@@ -99,7 +111,7 @@ export const renderMarkdown = (markdown: string) => {
           {renderTextChildren(children)}
         </TextInput>
       ),
-      h2: ({ children, node, ...props }: any) => (
+      h2: ({ children, node, ...props }: MarkdownComponentProps) => (
         <TextInput
           readOnly
           multiline
@@ -109,7 +121,7 @@ export const renderMarkdown = (markdown: string) => {
           {renderTextChildren(children)}
         </TextInput>
       ),
-      h3: ({ children, node, ...props }: any) => (
+      h3: ({ children, node, ...props }: MarkdownComponentProps) => (
         <TextInput
           readOnly
           multiline
@@ -119,7 +131,7 @@ export const renderMarkdown = (markdown: string) => {
           {renderTextChildren(children)}
         </TextInput>
       ),
-      h4: ({ children, node, ...props }: any) => (
+      h4: ({ children, node, ...props }: MarkdownComponentProps) => (
         <TextInput
           readOnly
           multiline
